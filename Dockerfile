@@ -4,10 +4,10 @@ FROM rapidsai/base:24.08-cuda12.2-py3.10
 # Ensure we're running as root
 USER root
 
-# Update and install dependencies
+# Update and install dependencies including wget, curl, and git
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y chromium-browser chromium-driver xvfb wget \
+    && apt-get install -y chromium-browser chromium-driver xvfb wget git curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
