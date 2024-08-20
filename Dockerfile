@@ -3,12 +3,13 @@ FROM rapidsai/base:24.08-cuda12.2-py3.10
 # Ensure we're running as root
 USER root
 # Update and install dependencies
+# Update and install dependencies
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y chromium chromium-driver xvfb \
+    && apt-get install -y chromium-browser chromium-driver xvfb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/chromedriver  /usr/local/bin/chromedriver
+    && ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
     
 RUN apt-get update && apt-get install -y libhdf5-dev
 
