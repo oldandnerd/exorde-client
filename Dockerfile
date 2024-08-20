@@ -48,8 +48,8 @@ RUN mkdir -p /tmp/fasttext-langdetect \
 # Copy the application data into the image
 COPY data /exorde
 
-# Set the release version
-ARG RELEASE_VERSION
+# Set the release version with a default value
+ARG RELEASE_VERSION=default_release
 RUN echo ${RELEASE_VERSION} > .release
 
 # Configure environment variables for offline use
