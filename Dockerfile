@@ -4,10 +4,11 @@ FROM rapidsai/base:24.08-cuda12.2-py3.10
 # Ensure we're running as root
 USER root
 
-# Update and install dependencies including wget, curl, and git
+# Update and install dependencies including wget, curl, git, and build tools
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y chromium-browser chromium-driver xvfb wget git curl \
+    && apt-get install -y build-essential cmake libffi-dev libssl-dev libpython3-dev python3-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
@@ -19,12 +20,14 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages using pip for Python 3.10
+# This includes installing a pre-built binary for fasttext to avoid build issues
 RUN python3.10 -m pip install --no-cache-dir \
         'git+https://github.com/exorde-labs/exorde_data.git' \
         'git+https://github.com/oldandnerd/exorde-client.git' \
         selenium==4.2.0 \
         wtpsplit==1.3.0 \
-    && python3.10 -m pip install --no-cache-dir --upgrade 'git+https://github.com/JustAnotherArchivist/snscrape.git'
+    && python3.10 -m pip install --no-cache-dir --upgrade 'git+https://github.com/JustAnotherArchivist/snscrape.git' \
+    && python3.10 -m pip install --no-cache-dir fasttext==0.9.2
 
 # Clean up pip cache
 RUN rm -rf /root/.cache/* \
