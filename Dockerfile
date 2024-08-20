@@ -1,5 +1,7 @@
 FROM rapidsai/base:24.08-cuda12.2-py3.10
 
+# Ensure we're running as root
+USER root
 # Update and install dependencies
 RUN apt-get update \
     && apt-get upgrade -y \
