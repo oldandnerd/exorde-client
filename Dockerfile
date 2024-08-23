@@ -11,7 +11,7 @@ RUN apt-get update \
 RUN apt-get update && apt-get install -y libhdf5-dev
 
 RUN pip3.10 install --no-cache-dir \
-        'git+https://github.com/oldandner/exorde_data.git' \
+        'git+https://github.com/oldandnerd/exorde_data.git' \
         'git+https://github.com/oldandnerd/exorde-client.git' \
         selenium==4.2.0 \
         wtpsplit==1.3.0 \
