@@ -209,14 +209,14 @@ def tag(documents: list[str], lab_configuration):
         gen_distilbert_sent = {}
         for e in prediction[0]:
             if e["label"] == "negative":
-                gen_distilbert_sent["negative"] = round(e["score"],3)
+                gen_distilbert_sent["negative"] = round(e["score"], 3)
             elif e["label"] == "neutral":
-                gen_distilbert_sent["neutral"] =  round(e["score"],3)
-            elif e["label"] == "positive"]:
-                gen_distilbert_sent["positive"] =  round(e["score"],3)
-        gdb_score = round((gen_distilbert_sent["positive"] - gen_distilbert_sent["negative"]),3)
+                gen_distilbert_sent["neutral"] = round(e["score"], 3)
+            elif e["label"] == "positive":  # This line had an unmatched ']'
+                gen_distilbert_sent["positive"] = round(e["score"], 3)
+        gdb_score = round((gen_distilbert_sent["positive"] - gen_distilbert_sent["negative"]), 3)
         return gdb_score
-    
+
     def compounded_financial_sentiment(text):
         fin_vader_sent = fin_vader_sentiment(text)
         fin_distil_score = fdb_sentiment(text)
