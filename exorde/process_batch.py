@@ -40,6 +40,7 @@ def Most_Common(lst):
     return data.most_common(1)[0][0]
 
 
+import cupy as cp
 
 def merge_chunks(chunks: list[ProcessedItem]) -> ProcessedItem:
     try:
@@ -73,6 +74,7 @@ def merge_chunks(chunks: list[ProcessedItem]) -> ProcessedItem:
             age_list.append(item_analysis_.age)
             embedding_list.append(item_analysis_.embedding)
 
+        # Aggregating the values
         most_common_category = Most_Common([x.label for x in categories_list])
         category_aggregated = Classification(
             label=most_common_category,
@@ -96,7 +98,7 @@ def merge_chunks(chunks: list[ProcessedItem]) -> ProcessedItem:
         source_type_aggregated = SourceType(
             Most_Common(source_type_list)
         )
-        
+
         text_type_aggregated = TextType(
             assumption=cp.median(cp.array([tt.assumption for tt in text_type_list])),
             anecdote=cp.median(cp.array([tt.anecdote for tt in text_type_list])),
@@ -154,6 +156,7 @@ def merge_chunks(chunks: list[ProcessedItem]) -> ProcessedItem:
         )
 
         centroid_vector = cp.median(cp.array(embedding_list), axis=0)
+
         closest_embedding = Embedding(
             min(
                 embedding_list,
@@ -185,13 +188,12 @@ def merge_chunks(chunks: list[ProcessedItem]) -> ProcessedItem:
         merged_item = None
     return merged_item
 
-
-
 SOCIAL_DOMAINS = [
     "4chan",
     "4channel.org",
     "reddit.com",
     "twitter.com",
+    "bsky.app",
     "t.com",
     "x.com",
     "youtube.com",
@@ -209,9 +211,8 @@ SOCIAL_DOMAINS = [
     "news.ycombinator.com",
     "tradingview.com",
     "followin.in",
-    "seekingalpha.io",
+    "seekingalpha.io"
 ]
-
 
 def get_source_type(item: ProtocolItem) -> SourceType:
     if item.domain in SOCIAL_DOMAINS:

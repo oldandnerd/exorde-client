@@ -1,72 +1,63 @@
-# Use the RAPIDS AI base image with CUDA 12.2 and Python 3.10
-FROM rapidsai/base:24.08-cuda12.2-py3.10
+FROM python:3.10.11
 
-# Ensure we're running as root
-USER root
-
-# Update and install dependencies including wget, curl, git, and build tools
+# Update and install dependencies
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y chromium-browser chromium-driver xvfb wget git curl \
-    && apt-get install -y build-essential cmake libffi-dev libssl-dev libpython3-dev python3-dev \
+    && apt-get install -y chromium chromium-driver xvfb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
+    && ln -s /usr/bin/chromedriver  /usr/local/bin/chromedriver
 
-# Install additional system dependencies
-RUN apt-get update \
-    && apt-get install -y libhdf5-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libhdf5-dev
 
-# Install Python packages using pip for Python 3.10
-# This includes installing a pre-built binary for fasttext to avoid build issues
-RUN python3.10 -m pip install --no-cache-dir \
-        'git+https://github.com/exorde-labs/exorde_data.git' \
+RUN pip3.10 install --no-cache-dir \
+        'git+https://github.com/oldandner/exorde_data.git' \
         'git+https://github.com/oldandnerd/exorde-client.git' \
         selenium==4.2.0 \
         wtpsplit==1.3.0 \
-    && python3.10 -m pip install --no-cache-dir --upgrade 'git+https://github.com/JustAnotherArchivist/snscrape.git' \
-    && python3.10 -m pip install --no-cache-dir fasttext==0.9.2
+    && pip3.10 install --no-cache-dir --upgrade 'git+https://github.com/JustAnotherArchivist/snscrape.git'
 
-# Clean up pip cache
+# Install RAPIDS dependencies and CuPy
+RUN pip3.10 install \
+    --extra-index-url=https://pypi.nvidia.com \
+    cudf-cu12==24.8.* dask-cudf-cu12==24.8.* cuml-cu12==24.8.* \
+    cugraph-cu12==24.8.* cuspatial-cu12==24.8.* cuproj-cu12==24.8.* \
+    cuxfilter-cu12==24.8.* cucim-cu12==24.8.* pylibraft-cu12==24.8.* \
+    raft-dask-cu12==24.8.* cuvs-cu12==24.8.*
+
+RUN pip3.10 install cupy-cuda12x
+
+# Clean cache now that we have installed everything
 RUN rm -rf /root/.cache/* \
     && rm -rf /root/.local/cache/*
-
-# Set the working directory
-WORKDIR /exorde
-
-# Copy the pre-installation script for models
-COPY exorde/pre_install.py /exorde/exorde_install_models.py
-
-# Download and install models for fastText, spaCy, and others
-RUN mkdir -p /tmp/fasttext-langdetect \
-    && wget -O /tmp/fasttext-langdetect/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin \
-    && python3.10 -m spacy download en_core_web_trf \
-    && python3.10 exorde_install_models.py
-
-# Copy the application data into the image
-COPY data /exorde
-
-# Set the release version with a default value
-ARG RELEASE_VERSION=default_release
-RUN echo ${RELEASE_VERSION} > .release
-
-# Configure environment variables for offline use
-ENV TRANSFORMERS_OFFLINE=1
-ENV HF_DATASETS_OFFLINE=1
-ENV HF_HUB_OFFLINE=1
 
 # Set display port to avoid crash
 ENV DISPLAY=:99
 
-# Set protocol buffers implementation to Python
+COPY exorde/pre_install.py /exorde/exorde_install_models.py
+WORKDIR /exorde
+
+## INSTALL ALL MODELS: huggingface, langdetect, spacy
+RUN mkdir -p /tmp/fasttext-langdetect
+RUN wget -O /tmp/fasttext-langdetect/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+RUN python3.10 -m spacy download en_core_web_trf
+RUN python3.10 exorde_install_models.py
+
+## INSTALL THE APP
+COPY data /exorde
+
+## Set the release version
+ARG RELEASE_VERSION
+RUN echo ${RELEASE_VERSION} > .release
+
+## SET huggingface transformers cache
+ENV TRANSFORMERS_OFFLINE=1
+ENV HF_DATASETS_OFFLINE=1
+ENV HF_HUB_OFFLINE=1
+
+## ENTRY POINT IS MAIN.PY
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
-
-# Copy and prepare the keep_alive script
 COPY keep_alive.sh /exorde/keep_alive.sh
-RUN chmod +x /exorde/keep_alive.sh \
-    && sed -i 's/\r$//' /exorde/keep_alive.sh
-
-# Set the entry point for the Docker container
-ENTRYPOINT ["/bin/bash", "/exorde/keep_alive.sh"]
+RUN chmod +x /exorde/keep_alive.sh
+RUN sed -i 's/\r$//' keep_alive.sh
+ENTRYPOINT ["/bin/bash","/exorde/keep_alive.sh"]
